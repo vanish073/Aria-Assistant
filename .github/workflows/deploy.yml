@@ -1,0 +1,58 @@
+# ──────────────────────────────────────────────────────────────────
+#  Deploy — triggers only after CI passes on main
+#  Railway picks up the push automatically once connected to GitHub.
+#  This workflow just posts a Slack/Discord notification (optional)
+#  and can be extended with smoke tests after deploy.
+# ──────────────────────────────────────────────────────────────────
+name: Deploy
+
+on:
+  # Only run after the CI workflow completes successfully
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+
+jobs:
+  deploy:
+    name: Trigger & verify deployment
+    runs-on: ubuntu-latest
+    # Only proceed if CI passed — do NOT deploy on CI failure
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ── Railway deploys automatically on push to main ─────────────
+      # Nothing extra needed here — Railway watches the repo.
+      # This step just confirms CI passed before Railway gets the push.
+      - name: Confirm CI passed
+        run: echo "✓ CI passed — Railway will deploy automatically"
+
+      # ── Optional: wait for Railway deploy then run a health check ─
+      # Uncomment this block once you have a live Railway URL.
+      # Replace the URL with your actual Railway app URL.
+      #
+      # - name: Health check after deploy
+      #   run: |
+      #     echo "Waiting 60s for Railway to finish deploying..."
+      #     sleep 60
+      #     STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://your-app.railway.app/health)
+      #     if [ "$STATUS" != "200" ]; then
+      #       echo "❌ Health check failed (HTTP $STATUS)"
+      #       exit 1
+      #     fi
+      #     echo "✓ Health check passed (HTTP $STATUS)"
+
+      # ── Optional: post to Slack when a deploy completes ──────────
+      # 1. Create a Slack webhook at api.slack.com/apps
+      # 2. Add it as a GitHub secret named SLACK_WEBHOOK_URL
+      # 3. Uncomment this block
+      #
+      # - name: Notify Slack
+      #   if: always()
+      #   run: |
+      #     curl -X POST ${{ secrets.SLACK_WEBHOOK_URL }} \
+      #       -H 'Content-type: application/json' \
+      #       --data '{"text":"🤖 ARIA deployed to production successfully"}'

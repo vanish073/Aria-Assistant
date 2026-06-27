@@ -1,0 +1,61 @@
+# ──────────────────────────────────────────────────────────────────
+#  CI — runs on every push and every pull request to main
+#  Checks: install → syntax → security audit → env validation
+# ──────────────────────────────────────────────────────────────────
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  check:
+    name: Lint & Audit
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1 — Check out the code
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 2 — Set up Node (matches our engines field in package.json)
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      # 3 — Install dependencies (ci is faster and stricter than install)
+      - name: Install dependencies
+        run: npm ci
+
+      # 4 — Syntax-check every JS file (catches typos / broken imports)
+      - name: Syntax check
+        run: |
+          echo "Checking all source files..."
+          find src -name "*.js" -print0 | xargs -0 node --check
+          echo "✓ All files passed syntax check"
+
+      # 5 — Check that required env keys are listed in .env.example
+      #     (guards against someone adding a new required var and forgetting to document it)
+      - name: Validate .env.example completeness
+        run: |
+          required="SESSION_SECRET GROQ_API_KEY GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET ENCRYPTION_KEY DATABASE_URL REDIS_URL"
+          missing=""
+          for key in $required; do
+            if ! grep -q "^$key=" .env.example; then
+              missing="$missing $key"
+            fi
+          done
+          if [ -n "$missing" ]; then
+            echo "❌ Missing from .env.example:$missing"
+            exit 1
+          fi
+          echo "✓ .env.example contains all required keys"
+
+      # 6 — Security audit (fails on high/critical vulnerabilities only)
+      - name: Security audit
+        run: npm audit --audit-level=high
+        continue-on-error: false

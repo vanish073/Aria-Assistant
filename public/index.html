@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ARIA — Executive Command Center</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- ── Sidebar ──────────────────────────────────────────────── -->
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-mark">
+        <div class="logo-icon">✦</div>
+        <div class="logo-name">ARIA</div>
+      </div>
+      <div class="logo-sub">Executive Assistant</div>
+      <div class="status-row">
+        <span class="status-dot"></span> All systems online
+      </div>
+    </div>
+
+    <nav>
+      <div class="nav-section">Workspace</div>
+      <div class="nav-item active" onclick="switchView('emails', this)">
+        <span class="nav-icon">✉</span> Email Triage
+        <span class="nav-badge" id="email-badge">—</span>
+      </div>
+      <div class="nav-item" onclick="switchView('calendar', this)">
+        <span class="nav-icon">◷</span> Calendar
+      </div>
+
+      <div class="nav-section">System</div>
+      <div class="nav-item" onclick="switchView('jobs', this)">
+        <span class="nav-icon">⚙</span> Job Queue
+      </div>
+      <div class="nav-item" onclick="switchView('audit', this)">
+        <span class="nav-icon">◈</span> Audit Log
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="footer-label">Agents</div>
+      <div class="agent-row">
+        <span class="agent-dot on"></span> Email triage
+      </div>
+      <div class="agent-row">
+        <span class="agent-dot on"></span> Calendar sync
+      </div>
+      <div class="agent-row">
+        <span class="agent-dot busy"></span> Copilot
+      </div>
+    </div>
+  </aside>
+
+  <!-- ── Main ─────────────────────────────────────────────────── -->
+  <main class="main">
+
+    <!-- Top bar -->
+    <div class="topbar">
+      <div class="topbar-title">Executive Command Center</div>
+      <div class="chip" id="chip-user">—</div>
+      <div class="chip" id="chip-health">Checking…</div>
+      <div class="chip" id="chip-model">Groq · Llama</div>
+      <div id="clock">—</div>
+    </div>
+
+    <!-- Metrics -->
+    <div class="metrics">
+      <div class="metric">
+        <div class="metric-label">Total Emails</div>
+        <div class="metric-val blue" id="m-emails">—</div>
+        <div class="metric-sub" id="m-emails-24h"></div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">AI Scheduled</div>
+        <div class="metric-val green" id="m-meetings">—</div>
+        <div class="metric-sub">meetings</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Tokens Used</div>
+        <div class="metric-val amber" id="m-tokens">—</div>
+        <div class="metric-sub">Groq free tier</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Avg Latency</div>
+        <div class="metric-val purple" id="m-latency">—</div>
+        <div class="metric-sub">AI response</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Jobs Done</div>
+        <div class="metric-val green" id="m-jobs">—</div>
+        <div class="metric-sub err" id="m-jobs-fail"></div>
+      </div>
+    </div>
+
+    <!-- 3-column content -->
+    <div class="content">
+
+      <!-- ── Left: Email triage ─────────────────────────────── -->
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title" id="left-title">Email Triage</div>
+          <button class="btn" id="sync-btn" onclick="triggerSync()">↻ Sync</button>
+          <button class="btn primary" onclick="showFilterMenu()">Filter</button>
+        </div>
+
+        <!-- Inbox health score bar (like reference image) -->
+        <div class="score-bar-wrap">
+          <div class="score-row">
+            <div class="score-label">Inbox Health Score</div>
+            <div class="score-val" id="inbox-score-val">—</div>
+          </div>
+          <div class="score-track">
+            <div class="score-fill" id="inbox-score-bar"></div>
+          </div>
+          <div class="score-legend">
+            <span>Critical</span><span>Poor</span><span>Fair</span><span>Good</span><span>Excellent</span>
+          </div>
+        </div>
+
+        <div class="ai-band">
+          <div class="ai-badge">◈ AI Analysis</div>
+          <div class="ai-text" id="ai-summary-text">Loading…</div>
+        </div>
+
+        <div class="scroll" id="email-list">
+          <div class="empty">Loading emails…</div>
+        </div>
+      </div>
+
+      <!-- ── Middle: Donut + Calendar + Audit ──────────────── -->
+      <div class="mid-panel">
+        <!-- Email distribution donut (like reference image) -->
+        <div class="panel-head">
+          <div class="panel-title">Email Distribution</div>
+        </div>
+        <div class="donut-card">
+          <svg class="donut-svg" width="100" height="100" viewBox="0 0 100 100" id="donut-canvas">
+            <text x="50" y="56" text-anchor="middle" fill="#333" font-size="10" font-family="monospace">Loading…</text>
+          </svg>
+          <div class="donut-legend">
+            <div class="legend-row"><span class="legend-dot" style="background:#ef4444"></span>Urgent<span class="legend-val" id="leg-urgent">—</span></div>
+            <div class="legend-row"><span class="legend-dot" style="background:#3b82f6"></span>Meeting<span class="legend-val" id="leg-meeting">—</span></div>
+            <div class="legend-row"><span class="legend-dot" style="background:#22c55e"></span>Triaged<span class="legend-val" id="leg-triaged">—</span></div>
+            <div class="legend-row"><span class="legend-dot" style="background:#333"></span>Pending<span class="legend-val" id="leg-pending">—</span></div>
+          </div>
+        </div>
+
+        <!-- Calendar -->
+        <div class="panel-head" style="border-top:1px solid var(--border)">
+          <div class="panel-title">Upcoming</div>
+          <button class="btn" onclick="loadCalendar()">↻</button>
+        </div>
+        <div class="scroll" id="calendar-list" style="max-height:200px;border-bottom:1px solid var(--border)">
+          <div class="empty">Loading…</div>
+        </div>
+
+        <!-- Activity -->
+        <div class="panel-head">
+          <div class="panel-title">Activity</div>
+        </div>
+        <div class="scroll" id="audit-list">
+          <div class="empty">Loading…</div>
+        </div>
+      </div>
+
+      <!-- ── Right: ARIA Copilot ────────────────────────────── -->
+      <div class="copilot">
+        <div class="copilot-head">
+          <div class="copilot-icon">✦</div>
+          <div class="copilot-name">ARIA Copilot</div>
+          <div class="copilot-online">
+            <span class="status-dot" style="width:4px;height:4px"></span> ready
+          </div>
+        </div>
+
+        <div class="copilot-messages" id="copilot-messages">
+          <div class="msg-date" id="copilot-date"></div>
+        </div>
+
+        <div class="copilot-quick">
+          <button class="quick-btn" onclick="quickSend('summarize today')">✦ Summarize</button>
+          <button class="quick-btn" onclick="quickSend('what are my urgent emails')">⚡ Urgent</button>
+          <button class="quick-btn" onclick="quickSend('when is my next meeting')">◷ Meetings</button>
+          <button class="quick-btn" onclick="quickSend('what should I do first today')">→ Priorities</button>
+          <button class="quick-btn" onclick="quickSend('inbox status')">◈ Inbox</button>
+        </div>
+
+        <div class="copilot-input-row">
+          <input
+            type="text"
+            id="copilot-input"
+            placeholder="Ask ARIA… (⌘K)"
+            maxlength="1000"
+          >
+          <button id="copilot-send" onclick="sendMessage()" title="Send (Enter)">↑</button>
+        </div>
+      </div>
+
+    </div><!-- .content -->
+  </main>
+</div>
+
+<script src="/app.js"></script>
+</body>
+</html>
